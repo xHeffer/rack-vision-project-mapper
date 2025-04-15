@@ -16,7 +16,7 @@ const Index = () => {
   return (
     <RackProvider>
       <div className="flex h-screen overflow-hidden">
-        <SidebarProvider defaultIsOpen={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SidebarProvider defaultOpen={sidebarOpen} onOpenChange={setSidebarOpen}>
           {/* Show sidebar on larger screens */}
           <div className={cn(
             "hidden md:block transition-all duration-300",

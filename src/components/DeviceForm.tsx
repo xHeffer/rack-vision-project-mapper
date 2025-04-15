@@ -75,12 +75,36 @@ const DeviceForm = ({ existingDevice, onSuccess, onCancel }: DeviceFormProps) =>
   
   const onSubmit = (values: FormValues) => {
     if (existingDevice) {
+      // Fix: Ensure all required properties are included
       updateDevice({
         id: existingDevice.id,
-        ...values
+        name: values.name,
+        type: values.type,
+        brand: values.brand,
+        model: values.model,
+        serialNumber: values.serialNumber,
+        ipAddress: values.ipAddress,
+        macAddress: values.macAddress,
+        status: values.status,
+        unitHeight: values.unitHeight,
+        powerConsumption: values.powerConsumption,
+        notes: values.notes
       });
     } else {
-      addDevice(values);
+      // Fix: Ensure all required properties are included
+      addDevice({
+        name: values.name,
+        type: values.type,
+        brand: values.brand,
+        model: values.model,
+        serialNumber: values.serialNumber,
+        ipAddress: values.ipAddress,
+        macAddress: values.macAddress,
+        status: values.status,
+        unitHeight: values.unitHeight,
+        powerConsumption: values.powerConsumption,
+        notes: values.notes
+      });
     }
     
     if (onSuccess) {
