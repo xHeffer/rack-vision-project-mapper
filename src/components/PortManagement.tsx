@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useRackContext } from "@/context/RackContext";
 import { Port, PortType, PortStatus } from "@/types";
@@ -11,16 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Cable, Ethernet, Usb, Power, Monitor, Terminal, Network, Plugin } from "lucide-react";
-
-interface PortManagementProps {
-  deviceId: string;
-}
+import { Network, Usb, Power, Monitor, Terminal, Plug } from "lucide-react";
 
 const PortIcon = ({ type }: { type: PortType }) => {
   switch (type) {
     case "ethernet":
-      return <Ethernet className="h-4 w-4" />;
+      return <Network className="h-4 w-4" />;
     case "usb":
       return <Usb className="h-4 w-4" />;
     case "power":
@@ -32,7 +27,7 @@ const PortIcon = ({ type }: { type: PortType }) => {
     case "fiber":
       return <Network className="h-4 w-4" />;
     default:
-      return <Plugin className="h-4 w-4" />;
+      return <Plug className="h-4 w-4" />;
   }
 };
 

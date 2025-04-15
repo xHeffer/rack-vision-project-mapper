@@ -1,11 +1,10 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRackContext } from "@/context/RackContext";
 import { Device, Port } from "@/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, SelectLabel } from "@/components/ui/select";
-import { Cable, Ethernet, Usb, Power, Monitor, Terminal, Network, Plugin } from "lucide-react";
+import { Cable, Network, Plug, Monitor, Terminal } from "lucide-react";
 
 interface PortConnectionDialogProps {
   open: boolean;
@@ -17,11 +16,11 @@ interface PortConnectionDialogProps {
 const getPortIcon = (type: string) => {
   switch (type) {
     case "ethernet":
-      return <Ethernet className="h-4 w-4 mr-1" />;
+      return <Network className="h-4 w-4 mr-1" />;
     case "usb":
-      return <Usb className="h-4 w-4 mr-1" />;
+      return <Terminal className="h-4 w-4 mr-1" />;
     case "power":
-      return <Power className="h-4 w-4 mr-1" />;
+      return <Terminal className="h-4 w-4 mr-1" />;
     case "hdmi":
       return <Monitor className="h-4 w-4 mr-1" />;
     case "serial":
@@ -29,7 +28,7 @@ const getPortIcon = (type: string) => {
     case "fiber":
       return <Network className="h-4 w-4 mr-1" />;
     default:
-      return <Plugin className="h-4 w-4 mr-1" />;
+      return <Plug className="h-4 w-4 mr-1" />;
   }
 };
 
@@ -42,19 +41,17 @@ const PortConnectionDialog = ({ open, onOpenChange, sourceDeviceId, sourcePortId
   const sourceDevice = getDeviceById(sourceDeviceId);
   const sourcePort = sourceDevice?.ports.find(p => p.id === sourcePortId);
   
-  // Reset state when dialog opens with new port
   useEffect(() => {
     if (open && sourceDeviceId && sourcePortId) {
       setTargetDeviceId("");
       setTargetPortId("");
       
-      // Filter devices (exclude source device and devices with no available ports)
       const filtered = devices.filter(device => {
         if (device.id === sourceDeviceId) return false;
         
-        // Check if device has at least one disconnected port
         return device.ports.some(port => 
-          port.status === "disconnected" && port.type === sourcePort?.type
+          port.status === "disconnected" && 
+          port.type === sourcePort?.type
         );
       });
       
@@ -69,7 +66,6 @@ const PortConnectionDialog = ({ open, onOpenChange, sourceDeviceId, sourcePortId
     }
   };
   
-  // Get available (disconnected) ports on the selected target device
   const availablePorts = targetDeviceId
     ? getDeviceById(targetDeviceId)?.ports
         .filter(port => 
