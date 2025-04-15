@@ -129,8 +129,8 @@ const Dashboard = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex-grow">
-          <div className="h-full">
+        <CardContent className="flex-grow p-0 overflow-hidden">
+          <div className="h-full p-4">
             <RackVisualization />
           </div>
         </CardContent>
