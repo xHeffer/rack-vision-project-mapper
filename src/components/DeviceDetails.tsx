@@ -8,6 +8,8 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import DeviceForm from "./DeviceForm";
+import PortManagement from "./PortManagement";
+import PortConnectionDialog from "./PortConnectionDialog";
 
 interface DeviceDetailsProps {
   deviceId: string;
@@ -32,6 +34,9 @@ const DeviceDetails = ({ deviceId }: DeviceDetailsProps) => {
   const { getDeviceById, deleteDevice, racks, selectedRackId } = useRackContext();
   const device = getDeviceById(deviceId);
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'info' | 'network' | 'location' | 'ports'>('info');
+  const [connectPortDialogOpen, setConnectPortDialogOpen] = useState(false);
+  const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   
   if (!device) {
     return <div>Device not found</div>;
@@ -57,6 +62,11 @@ const DeviceDetails = ({ deviceId }: DeviceDetailsProps) => {
     deleteDevice(deviceId);
   };
 
+  const handleConnectPort = (portId: string) => {
+    setSelectedPortId(portId);
+    setConnectPortDialogOpen(true);
+  };
+
   return (
     <>
       {!isEditing ? (
@@ -76,11 +86,12 @@ const DeviceDetails = ({ deviceId }: DeviceDetailsProps) => {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="info" className="w-full">
+          <Tabs defaultValue="info" className="w-full" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
             <TabsList className="w-full">
               <TabsTrigger value="info" className="flex-1">Info</TabsTrigger>
               <TabsTrigger value="network" className="flex-1">Network</TabsTrigger>
               <TabsTrigger value="location" className="flex-1">Location</TabsTrigger>
+              <TabsTrigger value="ports" className="flex-1">Ports</TabsTrigger>
             </TabsList>
             
             <TabsContent value="info" className="space-y-4 mt-4">
@@ -148,6 +159,10 @@ const DeviceDetails = ({ deviceId }: DeviceDetailsProps) => {
                 </div>
               </div>
             </TabsContent>
+            
+            <TabsContent value="ports" className="mt-4">
+              <PortManagement deviceId={deviceId} />
+            </TabsContent>
           </Tabs>
           
           <DialogFooter>
@@ -184,6 +199,13 @@ const DeviceDetails = ({ deviceId }: DeviceDetailsProps) => {
           onSuccess={() => setIsEditing(false)} 
         />
       )}
+      
+      <PortConnectionDialog 
+        open={connectPortDialogOpen}
+        onOpenChange={setConnectPortDialogOpen}
+        sourceDeviceId={deviceId}
+        sourcePortId={selectedPortId || ''}
+      />
     </>
   );
 };

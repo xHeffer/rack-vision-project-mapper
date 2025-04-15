@@ -10,6 +10,22 @@ export type DeviceStatus = 'active' | 'warning' | 'error' | 'inactive';
 
 export type DeviceType = 'server' | 'switch' | 'router' | 'storage' | 'other';
 
+export type PortType = 'ethernet' | 'usb' | 'power' | 'hdmi' | 'serial' | 'fiber' | 'other';
+
+export type PortStatus = 'connected' | 'disconnected' | 'error';
+
+export type Port = {
+  id: string;
+  name: string;
+  type: PortType;
+  status: PortStatus;
+  connectedToDeviceId?: string;
+  connectedToPortId?: string;
+  notes?: string;
+  speed?: string;
+  location: 'front' | 'back';
+};
+
 export type Device = {
   id: string;
   name: string;
@@ -23,6 +39,7 @@ export type Device = {
   unitHeight: number;
   powerConsumption?: number;
   notes?: string;
+  ports: Port[];
 };
 
 export type Rack = {

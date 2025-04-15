@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Device, DeviceStatus, DeviceType, Rack, RackUnit } from '../types';
+import { Device, DeviceStatus, DeviceType, Rack, RackUnit, Port, PortType, PortStatus } from '../types';
 import { toast } from '@/components/ui/use-toast';
 
 interface RackContextProps {
@@ -21,6 +20,11 @@ interface RackContextProps {
   removeDeviceFromRack: (deviceId: string, rackId: string) => void;
   getDeviceById: (id: string | undefined) => Device | undefined;
   getRackById: (id: string | undefined) => Rack | undefined;
+  addPort: (deviceId: string, port: Omit<Port, 'id'>) => void;
+  updatePort: (deviceId: string, portId: string, portData: Partial<Port>) => void;
+  deletePort: (deviceId: string, portId: string) => void;
+  connectPorts: (sourceDeviceId: string, sourcePortId: string, targetDeviceId: string, targetPortId: string) => void;
+  disconnectPort: (deviceId: string, portId: string) => void;
 }
 
 const RackContext = createContext<RackContextProps | undefined>(undefined);
@@ -44,7 +48,7 @@ const initialRacks: Rack[] = [
   }
 ];
 
-// Sample device data
+// Sample device data with ports
 const initialDevices: Device[] = [
   {
     id: uuidv4(),
@@ -58,7 +62,34 @@ const initialDevices: Device[] = [
     status: "active",
     unitHeight: 2,
     powerConsumption: 450,
-    notes: "Primary web server"
+    notes: "Primary web server",
+    ports: [
+      {
+        id: uuidv4(),
+        name: "eth0",
+        type: "ethernet",
+        status: "connected",
+        notes: "Connected to Core Switch",
+        speed: "1Gbps",
+        location: "back"
+      },
+      {
+        id: uuidv4(),
+        name: "eth1",
+        type: "ethernet",
+        status: "disconnected",
+        speed: "1Gbps",
+        location: "back"
+      },
+      {
+        id: uuidv4(),
+        name: "Power 1",
+        type: "power",
+        status: "connected",
+        notes: "Connected to PDU A",
+        location: "back"
+      }
+    ]
   },
   {
     id: uuidv4(),
@@ -72,7 +103,35 @@ const initialDevices: Device[] = [
     status: "active",
     unitHeight: 1,
     powerConsumption: 150,
-    notes: "Core network switch"
+    notes: "Core network switch",
+    ports: [
+      {
+        id: uuidv4(),
+        name: "Gig 1/0/1",
+        type: "ethernet",
+        status: "connected",
+        notes: "Connected to Web Server 01",
+        speed: "1Gbps",
+        location: "front"
+      },
+      {
+        id: uuidv4(),
+        name: "Gig 1/0/2",
+        type: "ethernet",
+        status: "connected",
+        notes: "Connected to Storage Array",
+        speed: "10Gbps",
+        location: "front"
+      },
+      {
+        id: uuidv4(),
+        name: "Power",
+        type: "power",
+        status: "connected",
+        notes: "Connected to PDU B",
+        location: "back"
+      }
+    ]
   },
   {
     id: uuidv4(),
@@ -86,7 +145,34 @@ const initialDevices: Device[] = [
     status: "warning",
     unitHeight: 4,
     powerConsumption: 800,
-    notes: "Primary storage - Disk 3 showing warnings"
+    notes: "Primary storage - Disk 3 showing warnings",
+    ports: [
+      {
+        id: uuidv4(),
+        name: "FC1",
+        type: "fiber",
+        status: "connected",
+        speed: "16Gbps",
+        location: "back"
+      },
+      {
+        id: uuidv4(),
+        name: "FC2",
+        type: "fiber",
+        status: "disconnected",
+        speed: "16Gbps",
+        location: "back"
+      },
+      {
+        id: uuidv4(),
+        name: "Mgmt",
+        type: "ethernet",
+        status: "connected",
+        notes: "Connected to Core Switch",
+        speed: "1Gbps",
+        location: "back"
+      }
+    ]
   }
 ];
 
@@ -150,7 +236,8 @@ export const RackProvider = ({ children }: { children: React.ReactNode }) => {
     const id = uuidv4();
     const newDevice: Device = {
       id,
-      ...deviceData
+      ...deviceData,
+      ports: deviceData.ports || [] // Ensure ports array is initialized
     };
     
     setDevices(prev => [...prev, newDevice]);
@@ -281,6 +368,177 @@ export const RackProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const addPort = (deviceId: string, port: Omit<Port, 'id'>) => {
+    const newPort: Port = {
+      id: uuidv4(),
+      ...port
+    };
+    
+    setDevices(prev => prev.map(device => {
+      if (device.id === deviceId) {
+        return {
+          ...device,
+          ports: [...device.ports, newPort]
+        };
+      }
+      return device;
+    }));
+    
+    toast({
+      title: "Port Added",
+      description: `${port.name} has been added successfully.`,
+    });
+  };
+
+  const updatePort = (deviceId: string, portId: string, portData: Partial<Port>) => {
+    setDevices(prev => prev.map(device => {
+      if (device.id === deviceId) {
+        return {
+          ...device,
+          ports: device.ports.map(port => {
+            if (port.id === portId) {
+              return {
+                ...port,
+                ...portData
+              };
+            }
+            return port;
+          })
+        };
+      }
+      return device;
+    }));
+    
+    toast({
+      title: "Port Updated",
+      description: "Port has been updated successfully.",
+    });
+  };
+
+  const deletePort = (deviceId: string, portId: string) => {
+    // First disconnect the port if it's connected
+    const device = devices.find(d => d.id === deviceId);
+    const port = device?.ports.find(p => p.id === portId);
+    
+    if (port && port.connectedToDeviceId && port.connectedToPortId) {
+      disconnectPort(deviceId, portId);
+    }
+    
+    setDevices(prev => prev.map(device => {
+      if (device.id === deviceId) {
+        return {
+          ...device,
+          ports: device.ports.filter(port => port.id !== portId)
+        };
+      }
+      return device;
+    }));
+    
+    toast({
+      title: "Port Deleted",
+      description: "Port has been removed successfully.",
+    });
+  };
+
+  const connectPorts = (sourceDeviceId: string, sourcePortId: string, targetDeviceId: string, targetPortId: string) => {
+    // Update both ports to show they're connected to each other
+    setDevices(prev => prev.map(device => {
+      if (device.id === sourceDeviceId) {
+        return {
+          ...device,
+          ports: device.ports.map(port => {
+            if (port.id === sourcePortId) {
+              return {
+                ...port,
+                status: 'connected',
+                connectedToDeviceId: targetDeviceId,
+                connectedToPortId: targetPortId
+              };
+            }
+            return port;
+          })
+        };
+      }
+      if (device.id === targetDeviceId) {
+        return {
+          ...device,
+          ports: device.ports.map(port => {
+            if (port.id === targetPortId) {
+              return {
+                ...port,
+                status: 'connected',
+                connectedToDeviceId: sourceDeviceId,
+                connectedToPortId: sourcePortId
+              };
+            }
+            return port;
+          })
+        };
+      }
+      return device;
+    }));
+    
+    toast({
+      title: "Ports Connected",
+      description: "Ports have been connected successfully.",
+    });
+  };
+
+  const disconnectPort = (deviceId: string, portId: string) => {
+    // Find the connected port
+    const device = devices.find(d => d.id === deviceId);
+    const port = device?.ports.find(p => p.id === portId);
+    
+    if (!port || !port.connectedToDeviceId || !port.connectedToPortId) {
+      return;
+    }
+    
+    const connectedDeviceId = port.connectedToDeviceId;
+    const connectedPortId = port.connectedToPortId;
+    
+    // Update both ports to disconnect them
+    setDevices(prev => prev.map(device => {
+      if (device.id === deviceId) {
+        return {
+          ...device,
+          ports: device.ports.map(p => {
+            if (p.id === portId) {
+              return {
+                ...p,
+                status: 'disconnected',
+                connectedToDeviceId: undefined,
+                connectedToPortId: undefined
+              };
+            }
+            return p;
+          })
+        };
+      }
+      if (device.id === connectedDeviceId) {
+        return {
+          ...device,
+          ports: device.ports.map(p => {
+            if (p.id === connectedPortId) {
+              return {
+                ...p,
+                status: 'disconnected',
+                connectedToDeviceId: undefined,
+                connectedToPortId: undefined
+              };
+            }
+            return p;
+          })
+        };
+      }
+      return device;
+    }));
+    
+    toast({
+      title: "Port Disconnected",
+      description: "Port has been disconnected successfully.",
+    });
+  };
+
   const getDeviceById = (id: string | undefined) => {
     if (!id) return undefined;
     return devices.find(device => device.id === id);
@@ -308,7 +566,12 @@ export const RackProvider = ({ children }: { children: React.ReactNode }) => {
       assignDeviceToUnit,
       removeDeviceFromRack,
       getDeviceById,
-      getRackById
+      getRackById,
+      addPort,
+      updatePort,
+      deletePort,
+      connectPorts,
+      disconnectPort
     }}>
       {children}
     </RackContext.Provider>

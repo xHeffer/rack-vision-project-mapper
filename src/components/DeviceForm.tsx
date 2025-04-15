@@ -75,7 +75,6 @@ const DeviceForm = ({ existingDevice, onSuccess, onCancel }: DeviceFormProps) =>
   
   const onSubmit = (values: FormValues) => {
     if (existingDevice) {
-      // Fix: Ensure all required properties are included
       updateDevice({
         id: existingDevice.id,
         name: values.name,
@@ -88,10 +87,10 @@ const DeviceForm = ({ existingDevice, onSuccess, onCancel }: DeviceFormProps) =>
         status: values.status,
         unitHeight: values.unitHeight,
         powerConsumption: values.powerConsumption,
-        notes: values.notes
+        notes: values.notes,
+        ports: existingDevice.ports, // Preserve existing ports
       });
     } else {
-      // Fix: Ensure all required properties are included
       addDevice({
         name: values.name,
         type: values.type,
@@ -103,7 +102,8 @@ const DeviceForm = ({ existingDevice, onSuccess, onCancel }: DeviceFormProps) =>
         status: values.status,
         unitHeight: values.unitHeight,
         powerConsumption: values.powerConsumption,
-        notes: values.notes
+        notes: values.notes,
+        ports: [], // Initialize with empty ports array
       });
     }
     
