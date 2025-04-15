@@ -3,6 +3,7 @@ import { useRackContext } from "@/context/RackContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Server, HardDrive, Router, Database, AlertTriangle, CheckCircle2 } from "lucide-react";
 import RackVisualization from "./RackVisualization";
+import { ScrollArea } from "./ui/scroll-area";
 
 const Dashboard = () => {
   const { devices, racks, selectedRackId } = useRackContext();
@@ -130,9 +131,11 @@ const Dashboard = () => {
           </div>
         </CardHeader>
         <CardContent className="flex-grow p-0 overflow-hidden">
-          <div className="h-full p-4">
-            <RackVisualization />
-          </div>
+          <ScrollArea className="h-full">
+            <div className="h-full p-4">
+              <RackVisualization />
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>

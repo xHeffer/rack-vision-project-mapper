@@ -1,12 +1,13 @@
 
 import { useRackContext } from "@/context/RackContext";
 import { RackUnit } from "@/types";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DeviceDetails from "./DeviceDetails";
 import { useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ScrollArea } from "./ui/scroll-area";
 
 const RackVisualization = () => {
   const { 
@@ -70,83 +71,89 @@ const RackVisualization = () => {
               <div className="text-center bg-rack-rail py-1 text-xs text-muted-foreground">
                 UNITS
               </div>
-              <div className="flex-grow">
-                {rack.units.map((unit) => (
-                  <div 
-                    key={`number-${unit.id}`}
-                    className="h-6 flex items-center justify-center border-b border-rack-rail text-xs text-muted-foreground"
-                  >
-                    {unit.position}
-                  </div>
-                ))}
-              </div>
+              <ScrollArea className="flex-grow">
+                <div>
+                  {rack.units.map((unit) => (
+                    <div 
+                      key={`number-${unit.id}`}
+                      className="h-6 flex items-center justify-center border-b border-rack-rail text-xs text-muted-foreground"
+                    >
+                      {unit.position}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
               <div className="text-center bg-rack-rail py-1 text-xs text-muted-foreground">
                 {rack.totalUnits}U
               </div>
             </div>
           </ResizablePanel>
           
+          <ResizableHandle withHandle />
+          
           <ResizablePanel defaultSize={85} minSize={50} className="relative">
             <div className="h-full flex flex-col">
               <div className="text-center bg-rack-rail py-1 text-xs text-muted-foreground">
                 {viewType === 'front' ? 'FRONT' : 'BACK'}
               </div>
-              <div className="flex-grow relative">
-                {rack.units.map((unit) => {
-                  const device = unit.deviceId ? getDeviceById(unit.deviceId) : undefined;
-                  const isFirstUnitOfDevice = device && rack.units.find(u => 
-                    u.deviceId === unit.deviceId && u.position === (unit.position + device.unitHeight - 1)
-                  );
-                  
-                  // Only render the device once at its lowest position
-                  const shouldRenderDevice = device && isFirstUnitOfDevice;
-                  const deviceHeight = device ? `${device.unitHeight * 1.5}rem` : '1.5rem';
-                  
-                  return (
-                    <div 
-                      key={unit.id}
-                      className={`rack-unit flex items-center border-b border-rack-rail relative ${
-                        unit.occupied ? 'bg-rack-occupied' : 'bg-rack-free'
-                      } ${
-                        shouldRenderDevice ? 'cursor-pointer' : ''
-                      }`}
-                      style={{ 
-                        height: unit.occupied && !shouldRenderDevice ? '0' : '1.5rem',
-                        overflow: shouldRenderDevice ? 'visible' : 'hidden',
-                        opacity: unit.occupied && !shouldRenderDevice ? 0 : 1
-                      }}
-                      onClick={() => shouldRenderDevice && handleUnitClick(unit)}
-                    >
-                      {shouldRenderDevice && device && (
-                        <div 
-                          className="flex flex-col justify-between p-2 w-full"
-                          style={{ height: deviceHeight }}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="overflow-hidden">
-                              <div className="flex items-center">
-                                <div className={`device-status-light status-${device.status} animate-pulse-slow`}></div>
-                                <span className="font-medium truncate">{device.name}</span>
+              <ScrollArea className="flex-grow">
+                <div className="relative">
+                  {rack.units.map((unit) => {
+                    const device = unit.deviceId ? getDeviceById(unit.deviceId) : undefined;
+                    const isFirstUnitOfDevice = device && rack.units.find(u => 
+                      u.deviceId === unit.deviceId && u.position === (unit.position + device.unitHeight - 1)
+                    );
+                    
+                    // Only render the device once at its lowest position
+                    const shouldRenderDevice = device && isFirstUnitOfDevice;
+                    const deviceHeight = device ? `${device.unitHeight * 1.5}rem` : '1.5rem';
+                    
+                    return (
+                      <div 
+                        key={unit.id}
+                        className={`rack-unit flex items-center border-b border-rack-rail relative ${
+                          unit.occupied ? 'bg-rack-occupied' : 'bg-rack-free'
+                        } ${
+                          shouldRenderDevice ? 'cursor-pointer' : ''
+                        }`}
+                        style={{ 
+                          height: unit.occupied && !shouldRenderDevice ? '0' : '1.5rem',
+                          overflow: shouldRenderDevice ? 'visible' : 'hidden',
+                          opacity: unit.occupied && !shouldRenderDevice ? 0 : 1
+                        }}
+                        onClick={() => shouldRenderDevice && handleUnitClick(unit)}
+                      >
+                        {shouldRenderDevice && device && (
+                          <div 
+                            className="flex flex-col justify-between p-2 w-full"
+                            style={{ height: deviceHeight }}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="overflow-hidden">
+                                <div className="flex items-center">
+                                  <div className={`device-status-light status-${device.status} animate-pulse-slow`}></div>
+                                  <span className="font-medium truncate">{device.name}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1 truncate">
+                                  {device.brand} {device.model}
+                                </div>
                               </div>
-                              <div className="text-xs text-muted-foreground mt-1 truncate">
-                                {device.brand} {device.model}
-                              </div>
+                              <Badge variant="outline" className="whitespace-nowrap ml-2">{device.type}</Badge>
                             </div>
-                            <Badge variant="outline" className="whitespace-nowrap ml-2">{device.type}</Badge>
+                            
+                            {device.unitHeight > 2 && (
+                              <div className="text-xs text-muted-foreground mt-2 truncate">
+                                {device.serialNumber}
+                                {device.ipAddress && ` • ${device.ipAddress}`}
+                              </div>
+                            )}
                           </div>
-                          
-                          {device.unitHeight > 2 && (
-                            <div className="text-xs text-muted-foreground mt-2 truncate">
-                              {device.serialNumber}
-                              {device.ipAddress && ` • ${device.ipAddress}`}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
               <div className="text-center bg-rack-rail py-1 text-xs text-muted-foreground">
                 {rack.totalUnits}U
               </div>
